@@ -1,58 +1,506 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LOCOS-API</title>
-<style>
-  *{box-sizing:border-box}
-  body{background:#000;color:#0f0;font-family:monospace;margin:0;padding:15px;min-height:100vh}
-  #matrix{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1}
-  .neon{font-size:36px;font-weight:900;text-shadow:0 0 15px #0f0;margin:25px 0;text-align:center}
-  .card{border:2px solid #0f0;border-radius:18px;box-shadow:0 0 15px #0f0;padding:24px;background:rgba(0,15,0,0.75);margin:20px auto;max-width:400px}
-  input{background:#000;border:2px solid #0f0;color:#0f0;padding:16px;width:100%;border-radius:12px;font-family:monospace;font-size:16px;margin:8px 0 16px 0;outline:none;box-shadow:0 0 8px rgba(0,255,0,0.4)}
-  .btn{background:#0f0;color:#000;border:none;padding:18px;width:100%;border-radius:12px;font-family:monospace;font-weight:900;font-size:18px;cursor:pointer;box-shadow:0 0 20px #0f0;margin-top:10px}
-  .btn-ghost{background:transparent;border:1px solid #0f0;color:#0f0;width:100%;padding:14px;border-radius:12px;font-family:monospace;cursor:pointer;margin-top:12px}
-  .hidden{display:none}
-  footer{text-align:center;margin-top:60px;padding:20px;font-size:14px;text-shadow:0 0 8px #0f0;border-top:1px solid rgba(0,255,0,0.2)}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="Locos API: documentación, estado del servicio y pruebas de endpoints.">
+  <title>LOCOS-API | Control Panel</title>
+  <style>
+    :root{--green:#0f0;--dark:#000;--panel:rgba(0,15,0,.80);--line:rgba(0,255,0,.35);--dim:#9bbd9b;--red:#ff6d6d}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{background:#000;color:var(--green);font-family:monospace;margin:0;padding:15px;min-height:100vh}
+    button,input,textarea,select{font:inherit}
+    button{cursor:pointer}
+    a{color:var(--green)}
+    #matrix{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+    .neon{font-size:36px;font-weight:900;text-shadow:0 0 15px #0f0;margin:25px 0;text-align:center;letter-spacing:2px}
+    .card{border:2px solid var(--green);border-radius:18px;box-shadow:0 0 15px #0f0;padding:24px;background:var(--panel);margin:20px auto;max-width:400px}
+    input,textarea,select{background:#000;border:2px solid var(--green);color:var(--green);padding:16px;width:100%;border-radius:12px;font-family:monospace;font-size:16px;margin:8px 0 16px;outline:none;box-shadow:0 0 8px rgba(0,255,0,.4)}
+    textarea{min-height:120px;resize:vertical;line-height:1.5}
+    input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #fff;outline-offset:3px}
+    input::placeholder,textarea::placeholder{color:#658565}
+    .btn{background:var(--green);color:#000;border:none;padding:18px;width:100%;border-radius:12px;font-family:monospace;font-weight:900;font-size:18px;cursor:pointer;box-shadow:0 0 20px #0f0;margin-top:10px;transition:filter .15s,transform .15s}
+    .btn:hover,.btn-ghost:hover,.nav-btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+    .btn:disabled{opacity:.5;cursor:wait;transform:none}
+    .btn-ghost{background:transparent;border:1px solid var(--green);color:var(--green);width:100%;padding:14px;border-radius:12px;font-family:monospace;cursor:pointer;margin-top:12px}
+    .hidden{display:none!important}
+    .muted{color:var(--dim);line-height:1.65}
+    .small{font-size:12px}
+    .eyebrow{font-size:12px;letter-spacing:2px;color:#82e982;text-transform:uppercase}
+    .auth-note{text-align:center;max-width:420px;margin:6px auto 0;color:var(--dim);font-size:12px;line-height:1.7}
+    .auth-info{font-size:12px;line-height:1.6;color:var(--dim);border-left:2px solid var(--green);padding-left:12px;margin:16px 0 6px}
+    .feedback{min-height:20px;color:var(--red);font-size:13px;line-height:1.5;margin:8px 0 0}
+    footer{text-align:center;margin-top:60px;padding:20px;font-size:14px;text-shadow:0 0 8px #0f0;border-top:1px solid rgba(0,255,0,.2)}
+    /* Dashboard: continuación del diseño original negro + Matrix + verde neón */
+    .shell{max-width:1250px;margin:20px auto 0;display:grid;grid-template-columns:235px minmax(0,1fr);gap:22px;align-items:start}
+    .sidebar,.surface{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:0 0 16px rgba(0,255,0,.16)}
+    .sidebar{position:sticky;top:20px;padding:22px 15px}
+    .sidebar-logo{font-size:23px;font-weight:900;text-shadow:0 0 13px #0f0;padding:10px 9px 15px}
+    .sidebar-logo span{color:#fff}
+    .side-subtitle{font-size:11px;letter-spacing:1.3px;color:var(--dim);padding:0 9px 14px}
+    .nav-list{display:grid;gap:8px;margin:12px 0 26px}
+    .nav-btn{width:100%;border:1px solid transparent;text-align:left;color:var(--dim);background:transparent;border-radius:10px;padding:13px 12px;transition:.15s}
+    .nav-btn.active{border-color:var(--green);background:rgba(0,255,0,.13);color:var(--green);box-shadow:inset 0 0 10px rgba(0,255,0,.12)}
+    .sidebar-bottom{border-top:1px solid var(--line);padding:16px 10px 0;display:grid;gap:12px;font-size:12px}
+    .status-dot{display:inline-block;width:8px;height:8px;background:#ffa726;border-radius:50%;box-shadow:0 0 8px currentColor;margin-right:6px}
+    .status-dot.up{background:var(--green);box-shadow:0 0 10px var(--green)}
+    .status-dot.down{background:var(--red);box-shadow:0 0 10px var(--red)}
+    .content{min-width:0}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:6px 2px 24px}
+    .topbar h1{font-size:25px;margin:0;text-shadow:0 0 12px rgba(0,255,0,.6)}
+    .top-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+    .pill{border:1px solid var(--line);padding:9px 11px;border-radius:100px;font-size:12px;background:rgba(0,20,0,.7)}
+    .mini-btn{border:1px solid var(--green);background:transparent;color:var(--green);border-radius:10px;padding:10px 12px;font-family:monospace}
+    .mini-btn:hover{background:rgba(0,255,0,.15)}
+    .panel{display:none}
+    .panel.active{display:block;animation:appear .25s ease-out}
+    @keyframes appear{from{opacity:.2;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+    .hero{padding:30px;position:relative;overflow:hidden}
+    .hero:before{content:'>_';position:absolute;right:18px;top:8px;font-size:95px;color:rgba(0,255,0,.09);font-weight:900;pointer-events:none}
+    .hero h2{font-size:clamp(25px,4vw,43px);line-height:1.12;letter-spacing:1px;margin:12px 0;max-width:720px;text-shadow:0 0 15px rgba(0,255,0,.5)}
+    .hero p{max-width:650px}
+    .hero-buttons{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+    .action-btn{width:auto;min-width:170px;margin:0;font-size:14px;padding:14px 19px;box-shadow:0 0 15px rgba(0,255,0,.5)}
+    .action-outline{border:1px solid var(--green);color:var(--green);background:#000;box-shadow:none}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+    .stat{padding:20px;min-width:0}
+    .stat-value{font-size:27px;font-weight:900;margin:12px 0 5px;overflow-wrap:anywhere}
+    .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:28px 0 14px}
+    .section-head h2{font-size:20px;margin:0}
+    .terminal{padding:20px;min-width:0}
+    .terminal-header{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);margin-bottom:13px;padding-bottom:12px;font-size:13px}
+    .window-dots{display:flex;gap:5px;margin-right:10px}
+    .window-dots i{display:inline-block;border:1px solid var(--green);width:9px;height:9px;border-radius:50%}
+    .code{background:#010a01;border:1px solid rgba(0,255,0,.25);border-radius:10px;padding:16px;white-space:pre-wrap;overflow:auto;overflow-wrap:anywhere;color:#a4fba4;font:13px/1.65 monospace;min-height:55px}
+    .endpoint-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+    .endpoint{padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+    .endpoint h3{margin:0;font-size:17px;overflow-wrap:anywhere}
+    .method{display:inline-block;background:rgba(0,255,0,.16);color:#a9ffa9;border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:11px;font-weight:900;letter-spacing:1px}
+    .method.post{color:#fff;background:rgba(0,255,0,.24)}
+    .endpoint-buttons{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}
+    .endpoint-buttons .mini-btn{font-size:12px}
+    .two-cols{display:grid;grid-template-columns:1.05fr 1fr;gap:16px}
+    .section-box{padding:22px;min-width:0}
+    .section-box h3{margin-top:0}
+    .section-box label{font-size:12px;letter-spacing:1px}
+    .section-box input,.section-box select,.section-box textarea{box-shadow:none;font-size:14px}
+    .copy-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+    .docs-steps{line-height:1.75;color:var(--dim)}
+    .docs-steps strong{color:var(--green)}
+    .section-box p{line-height:1.6}
+    .demo-tag{font-size:11px;color:#d5efd5;border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+    .notice{padding:14px 16px;border:1px dashed var(--green);border-radius:12px;background:rgba(0,255,0,.05);font-size:12px;line-height:1.7;color:#b3d6b3}
+    #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:#000;background:#0f0;box-shadow:0 0 25px #0f0;padding:12px 18px;border-radius:10px;z-index:10;font-weight:900;font-size:13px;max-width:min(90vw,470px);text-align:center}
+    @media(max-width:950px){.shell{grid-template-columns:1fr;gap:15px}.sidebar{position:static;padding:12px}.sidebar-logo{display:inline-block;padding:8px}.side-subtitle,.sidebar-bottom{display:none}.nav-list{display:flex;overflow:auto;gap:7px;margin:5px 0}.nav-btn{white-space:nowrap;min-width:max-content;padding:10px}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    @media(max-width:630px){body{padding:10px}.card{padding:20px}.grid,.endpoint-grid,.two-cols{grid-template-columns:1fr}.hero{padding:22px}.hero:before{font-size:75px}.hero-buttons{flex-direction:column}.action-btn{width:100%}.topbar h1{font-size:21px}.stat-value{font-size:23px}.section-head{align-items:flex-start;flex-direction:column}.shell{margin-top:0}.nav-list{margin-bottom:3px}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+  </style>
 </head>
 <body>
-<canvas id="matrix"></canvas>
-<h1 class="neon">LOCOS-API</h1>
+<canvas id="matrix" aria-hidden="true"></canvas>
 
-<div class="card" id="registerCard">
-  <h2>REGISTER</h2>
-  <label>GMAIL</label>
-  <input id="reg_email" type="email" placeholder="you@gmail.com">
-  <label>USER NAME</label>
-  <input id="reg_user" type="text" placeholder="locos_user">
-  <label>PASSWORD</label>
-  <input id="reg_pass" type="password" placeholder="••••••••">
-  <button class="btn" onclick="doRegister()">REGISTER</button>
-  <button class="btn-ghost" onclick="showLogin()">¿Ya tienes cuenta? INICIAR SESIÓN</button>
+<!-- Registro y login originales: conservados visualmente, ahora abren el panel -->
+<div id="authScreen">
+  <h1 class="neon">LOCOS-API</h1>
+  <p class="auth-note">&gt; LOCOS Y ASOCIADOS_ · PANEL DE CONTROL</p>
+
+  <form class="card" id="registerCard">
+    <h2>REGISTER</h2>
+    <label for="reg_email">GMAIL</label>
+    <input id="reg_email" type="email" placeholder="you@gmail.com" autocomplete="email" maxlength="180" required>
+    <label for="reg_user">USER NAME</label>
+    <input id="reg_user" type="text" placeholder="locos_user" autocomplete="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9_-]{3,32}" title="3 a 32 letras, números, guiones o guiones bajos" required>
+    <label for="reg_pass">PASSWORD</label>
+    <input id="reg_pass" type="password" placeholder="••••••••" autocomplete="new-password" minlength="8" maxlength="128" required>
+    <button class="btn" type="submit" id="registerSubmit">REGISTER</button>
+    <button class="btn-ghost" type="button" id="showLogin">¿Ya tienes cuenta? INICIAR SESIÓN</button>
+    <p class="feedback" id="registerError" role="alert"></p>
+    <div class="auth-info">MODO DEMO: la cuenta se guarda solo en este navegador. No es un registro real; no uses tu contraseña personal.</div>
+  </form>
+
+  <form class="card hidden" id="loginCard">
+    <h2>LOGIN</h2>
+    <label for="log_user">USER NAME</label>
+    <input id="log_user" type="text" autocomplete="username" required>
+    <label for="log_pass">PASSWORD</label>
+    <input id="log_pass" type="password" autocomplete="current-password" required>
+    <button class="btn" type="submit" id="loginSubmit">INICIAR SESIÓN</button>
+    <button class="btn-ghost" type="button" id="showRegister">¿No tienes cuenta? REGISTRARSE</button>
+    <p class="feedback" id="loginError" role="alert"></p>
+    <div class="auth-info">Acceso de demostración: no funciona como autenticación segura en el servidor.</div>
+  </form>
+  <div style="max-width:400px;margin:auto"><button class="btn-ghost" id="guestButton" type="button">&gt; EXPLORAR API SIN CUENTA</button></div>
 </div>
 
-<div class="card hidden" id="loginCard">
-  <h2>LOGIN</h2>
-  <label>USER NAME</label>
-  <input id="log_user" type="text">
-  <label>PASSWORD</label>
-  <input id="log_pass" type="password">
-  <button class="btn" onclick="doLogin()">INICIAR SESIÓN</button>
-  <button class="btn-ghost" onclick="showRegister()">¿No tienes cuenta? REGISTRARSE</button>
+<!-- Panel añadido: se muestra después de iniciar sesión o como visitante -->
+<div class="shell hidden" id="appScreen">
+  <aside class="sidebar" aria-label="Menú principal">
+    <div class="sidebar-logo">LOCOS<span>-</span>API<span>_</span></div>
+    <div class="side-subtitle">// CONTROL SYSTEM v0.1.0</div>
+    <nav class="nav-list" aria-label="Secciones">
+      <button class="nav-btn active" data-nav="home" type="button">⌂ &nbsp; INICIO</button>
+      <button class="nav-btn" data-nav="endpoints" type="button">⌘ &nbsp; ENDPOINTS</button>
+      <button class="nav-btn" data-nav="tester" type="button">&gt;_ &nbsp; PROBAR API</button>
+      <button class="nav-btn" data-nav="docs" type="button">▤ &nbsp; DOCUMENTACIÓN</button>
+      <button class="nav-btn" data-nav="account" type="button">◉ &nbsp; MI CUENTA</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div><span id="sideDot" class="status-dot"></span><span id="sideStatus">VERIFICANDO...</span></div>
+      <div class="muted">© Locos y asociados</div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="topbar">
+      <div><p class="eyebrow" style="margin:0 0 7px">// LOCOS CONTROL CENTER</p><h1 id="pageTitle">INICIO_</h1></div>
+      <div class="top-actions"><span class="pill" id="userBadge">VISITANTE</span><button type="button" class="mini-btn" id="refreshButton">↻ ACTUALIZAR</button><button type="button" class="mini-btn" id="logoutButton">SALIR</button></div>
+    </div>
+
+    <section class="panel active" id="panel-home" aria-label="Inicio">
+      <div class="surface hero">
+        <div class="eyebrow">[ SYSTEM // LOCOS-API ]</div>
+        <h2>BIENVENIDO AL<br>PANEL DE LOCOS API_</h2>
+        <p class="muted">Consultá el estado del servidor, explorá los endpoints disponibles y probá las respuestas reales de la API desde un solo lugar.</p>
+        <div class="hero-buttons">
+          <button type="button" class="btn action-btn" data-goto="tester">&gt; PROBAR ENDPOINTS</button>
+          <button type="button" class="btn action-btn action-outline" data-goto="docs">VER DOCUMENTACIÓN</button>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="surface stat"><span class="eyebrow">ESTADO DEL SERVIDOR</span><div class="stat-value" id="statusValue">CARGANDO...</div><div class="muted small" id="statusDetail">Consultando /healthz</div></div>
+        <div class="surface stat"><span class="eyebrow">ENDPOINTS DISPONIBLES</span><div class="stat-value">04</div><div class="muted small">Pruebas y estado real</div></div>
+        <div class="surface stat"><span class="eyebrow">TIEMPO ACTIVO</span><div class="stat-value" id="uptimeValue">--</div><div class="muted small">Desde el último inicio</div></div>
+      </div>
+      <div class="section-head"><h2>&gt; RESPUESTA RÁPIDA</h2><button type="button" class="mini-btn" data-goto="tester">ABRIR TESTER</button></div>
+      <div class="surface terminal">
+        <div class="terminal-header"><span class="window-dots"><i></i><i></i><i></i></span>terminal / api/v1/ping</div>
+        <pre class="code" id="quickResponse" aria-live="polite">$ GET /api/v1/ping
+&gt; Comprobando conexión...</pre>
+      </div>
+      <div class="section-head"><h2>&gt; SOBRE ESTA API</h2></div>
+      <div class="surface section-box"><p>Locos API es un proyecto de <strong>Locos y asociados</strong>. Esta versión incluye endpoints básicos de prueba, respuesta JSON y documentación. Los futuros módulos se podrán añadir sin cambiar el diseño del panel.</p><div class="notice">Los servicios de descarga, inteligencia artificial u otras funciones todavía no están programados. Esta página muestra únicamente las rutas que existen actualmente.</div></div>
+    </section>
+
+    <section class="panel" id="panel-endpoints" aria-label="Endpoints disponibles">
+      <div class="surface section-box"><p class="eyebrow">// API ROUTES</p><h2>ENDPOINTS DISPONIBLES_</h2><p class="muted">Estas rutas ya existen en el backend actual. Podés consultarlas o probarlas desde la página.</p></div>
+      <div class="section-head"><h2>&gt; LISTA DE RUTAS</h2><span class="demo-tag">BASE URL: <span class="baseUrl">...</span></span></div>
+      <div class="endpoint-grid">
+        <article class="surface endpoint"><div><span class="method">GET</span></div><h3>/healthz</h3><p class="muted small">Comprueba si el servicio responde correctamente.</p><div class="endpoint-buttons"><button type="button" class="mini-btn" data-try="/healthz">PROBAR</button><button type="button" class="mini-btn" data-copy-path="/healthz">COPIAR URL</button></div></article>
+        <article class="surface endpoint"><div><span class="method">GET</span></div><h3>/api/v1/ping</h3><p class="muted small">Prueba sencilla de conexión: devuelve un pong.</p><div class="endpoint-buttons"><button type="button" class="mini-btn" data-try="/api/v1/ping">PROBAR</button><button type="button" class="mini-btn" data-copy-path="/api/v1/ping">COPIAR URL</button></div></article>
+        <article class="surface endpoint"><div><span class="method">GET</span></div><h3>/api/v1/info</h3><p class="muted small">Nombre, versión y tiempo activo del servicio.</p><div class="endpoint-buttons"><button type="button" class="mini-btn" data-try="/api/v1/info">PROBAR</button><button type="button" class="mini-btn" data-copy-path="/api/v1/info">COPIAR URL</button></div></article>
+        <article class="surface endpoint"><div><span class="method post">POST</span></div><h3>/api/v1/echo</h3><p class="muted small">Recibe un mensaje JSON y devuelve ese mismo texto.</p><div class="endpoint-buttons"><button type="button" class="mini-btn" data-try="/api/v1/echo">PROBAR</button><button type="button" class="mini-btn" data-copy-path="/api/v1/echo">COPIAR URL</button></div></article>
+      </div>
+      <div class="section-head"><h2>&gt; DOCUMENTACIÓN JSON</h2></div>
+      <div class="surface section-box"><p>El backend también publica su catálogo en <code>/api/docs</code>.</p><button type="button" class="mini-btn" data-try="/api/docs">VER RESPUESTA JSON</button></div>
+    </section>
+
+    <section class="panel" id="panel-tester" aria-label="Probar la API">
+      <div class="surface section-box"><p class="eyebrow">// LIVE API TESTER</p><h2>PROBÁ TU API EN VIVO_</h2><p class="muted">Hacé una petición real al servidor y revisá el código HTTP, la demora y su respuesta JSON.</p></div>
+      <div class="two-cols" style="margin-top:16px">
+        <form class="surface section-box" id="testerForm">
+          <h3>&gt; NUEVA SOLICITUD</h3>
+          <label for="endpointSelect">ENDPOINT</label>
+          <select id="endpointSelect">
+            <option value="/api/v1/ping">GET /api/v1/ping</option>
+            <option value="/healthz">GET /healthz</option>
+            <option value="/api/v1/info">GET /api/v1/info</option>
+            <option value="/api/docs">GET /api/docs</option>
+            <option value="/api/v1/echo">POST /api/v1/echo</option>
+          </select>
+          <div class="muted small">URL: <span id="testerUrl" style="overflow-wrap:anywhere"></span></div>
+          <div id="requestBodyGroup" class="hidden" style="margin-top:20px"><label for="requestBody">BODY · JSON</label><textarea id="requestBody" spellcheck="false">{"message":"Hola, Locos API!"}</textarea></div>
+          <button class="btn" id="sendRequest" type="submit">&gt; ENVIAR SOLICITUD</button>
+        </form>
+        <div class="surface section-box">
+          <div class="copy-row"><h3 style="margin:0">&gt; RESPUESTA</h3><button type="button" class="mini-btn" id="copyResponse">COPIAR</button></div>
+          <p class="muted small" id="responseMeta" aria-live="polite">Esperando solicitud...</p>
+          <pre id="testResponse" class="code" style="min-height:235px" aria-live="polite">{
+  "info": "Elegí un endpoint y presioná enviar"
+}</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-docs" aria-label="Documentación de la API">
+      <div class="surface section-box"><p class="eyebrow">// DEVELOPER DOCUMENTATION</p><h2>DOCUMENTACIÓN_</h2><p class="muted">Locos API utiliza HTTP y JSON. Los endpoints actuales no necesitan API key. Esto puede cambiar si se incorporan servicios nuevos.</p></div>
+      <div class="section-head"><h2>01 / URL BASE</h2><button type="button" class="mini-btn" id="copyBaseUrl">COPIAR</button></div>
+      <div class="surface section-box"><pre class="code baseUrl">Cargando...</pre></div>
+      <div class="section-head"><h2>02 / EJEMPLO GET</h2><button type="button" class="mini-btn" data-copy-code="curlGet">COPIAR CURL</button></div>
+      <div class="surface section-box"><p class="muted">Comprobá que la API está respondiendo.</p><pre class="code" id="curlGet"></pre><p class="muted small">Respuesta esperada:</p><pre class="code">{"ok":true,"message":"pong"}</pre></div>
+      <div class="section-head"><h2>03 / EJEMPLO POST</h2><button type="button" class="mini-btn" data-copy-code="curlPost">COPIAR CURL</button></div>
+      <div class="surface section-box"><p class="muted">Enviá JSON usando el encabezado <code>Content-Type: application/json</code>.</p><pre class="code" id="curlPost"></pre><p class="muted small">Respuesta esperada:</p><pre class="code">{"ok":true,"message":"hola"}</pre></div>
+      <div class="section-head"><h2>04 / ERRORES COMUNES</h2></div>
+      <div class="surface section-box"><p class="docs-steps"><strong>400</strong> — JSON inválido o campos incorrectos.<br><strong>404</strong> — El endpoint solicitado no existe.<br><strong>415</strong> — Falta el encabezado de JSON en solicitudes POST.<br><strong>429</strong> — Se alcanzó el límite de peticiones.<br><strong>500</strong> — Error interno del servidor.</p><p class="muted small">Las respuestas reales dependen del estado del servidor y de la solicitud enviada.</p></div>
+    </section>
+
+    <section class="panel" id="panel-account" aria-label="Información de la cuenta">
+      <div class="surface section-box"><p class="eyebrow">// PROFILE</p><h2>MI CUENTA_</h2><p class="muted">Información de esta sesión en el navegador.</p></div>
+      <div class="two-cols" style="margin-top:16px">
+        <div class="surface section-box"><h3>&gt; PERFIL</h3><p>USUARIO: <strong id="profileUser">VISITANTE</strong></p><p>EMAIL: <span id="profileEmail">No disponible</span></p><p>TIPO: <span class="demo-tag" id="profileType">INVITADO</span></p><button type="button" class="btn-ghost" id="accountLogout">CERRAR SESIÓN</button></div>
+        <div class="surface section-box"><h3>&gt; SEGURIDAD Y CUENTAS</h3><p class="muted">Este registro es solo una demostración de interfaz: los datos se guardan localmente en este dispositivo, no en una base de datos.</p><div class="notice">No uses una contraseña real. Para tener usuarios, sesiones, API keys o permisos verdaderos, hay que implementar autenticación en el backend.</div></div>
+      </div>
+    </section>
+  </main>
 </div>
 
-<footer>© Locos y asociados</footer>
+<footer>© Locos y asociados · LOCOS-API</footer>
+<div id="toast" class="hidden" role="status" aria-live="polite"></div>
 
 <script>
-const c=document.getElementById("matrix"),x=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;
-const cols=Math.floor(c.width/20)+1,y=Array(cols).fill(0);
-setInterval(()=>{x.fillStyle="rgba(0,0,0,0.05)";x.fillRect(0,0,c.width,c.height);x.fillStyle="#0f0";x.font="15px monospace";y.forEach((v,i)=>{x.fillText(String.fromCharCode(33+Math.random()*94),i*20,v);y[i]=v>c.height&&Math.random()>0.975?0:v+20})},50);
-function showLogin(){registerCard.classList.add('hidden');loginCard.classList.remove('hidden')}
-function showRegister(){loginCard.classList.add('hidden');registerCard.classList.remove('hidden')}
-function doRegister(){if(!reg_email.value||!reg_user.value||!reg_pass.value)return alert('Completa todo');localStorage.setItem('locos_user',JSON.stringify({email:reg_email.value,user:reg_user.value,pass:reg_pass.value}));alert('Registrado');showLogin()}
-function doLogin(){const s=JSON.parse(localStorage.getItem('locos_user')||'null');if(s&&s.user===log_user.value&&s.pass===log_pass.value)alert('Bienvenido '+s.user);else alert('Datos incorrectos')}
+'use strict';
+const $ = (id) => document.getElementById(id);
+const STORAGE_KEY = 'locos_demo_user_v2';
+const SESSION_KEY = 'locos_demo_session';
+const GUEST_KEY = 'locos_demo_guest';
+const origin = window.location.origin;
+let currentUser = null;
+let toastTimer;
+
+// Matrix del diseño original, limitado a ~10 FPS para gastar menos CPU.
+(function matrixEffect(){
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const canvas = $('matrix');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  let drops = [];
+  function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    drops = Array(Math.ceil(canvas.width / 20)).fill(0);
+  }
+  resize();
+  window.addEventListener('resize', resize, {passive:true});
+  window.setInterval(() => {
+    if (document.hidden) return;
+    ctx.fillStyle='rgba(0,0,0,0.07)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#0f0';
+    ctx.font='15px monospace';
+    drops.forEach((drop,i)=>{
+      ctx.fillText(String.fromCharCode(33+Math.floor(Math.random()*94)),i*20,drop);
+      drops[i] = drop>canvas.height && Math.random()>.975 ? 0 : drop+20;
+    });
+  },100);
+})();
+
+function notify(message){
+  const toast = $('toast');
+  toast.textContent = message;
+  toast.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.add('hidden'), 2500);
+}
+function showLogin(){ $('registerCard').classList.add('hidden'); $('loginCard').classList.remove('hidden'); $('registerError').textContent=''; }
+function showRegister(){ $('loginCard').classList.add('hidden'); $('registerCard').classList.remove('hidden'); $('loginError').textContent=''; }
+$('showLogin').addEventListener('click',showLogin);
+$('showRegister').addEventListener('click',showRegister);
+
+// Demo local. Se guarda solo un hash con salt: no se almacena la contraseña en texto plano.
+// Esto NO equivale a autenticación del servidor.
+function toB64(bytes){ return btoa(String.fromCharCode(...bytes)); }
+function fromB64(str){ return Uint8Array.from(atob(str), c => c.charCodeAt(0)); }
+async function hashPassword(password, salt){
+  if (!globalThis.crypto || !crypto.subtle) throw new Error('Para registrar una cuenta demo necesitás HTTPS o localhost.');
+  const key = await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);
+  const derived = await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:120000,hash:'SHA-256'},key,256);
+  return toB64(new Uint8Array(derived));
+}
+function readAccount(){
+  try {return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');}
+  catch {return null;}
+}
+$('registerCard').addEventListener('submit',async (event)=>{
+  event.preventDefault();
+  const email=$('reg_email').value.trim(),user=$('reg_user').value.trim(),pass=$('reg_pass').value;
+  const error=$('registerError'); error.textContent='';
+  if(!/^[A-Za-z0-9_-]{3,32}$/.test(user)){error.textContent='El usuario debe tener entre 3 y 32 caracteres válidos.';return;}
+  if(pass.length<8){error.textContent='Usá al menos 8 caracteres (solo para esta demo).';return;}
+  const button=$('registerSubmit'); button.disabled=true; button.textContent='GUARDANDO...';
+  try{
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    const record={email,user,salt:toB64(salt),hash:await hashPassword(pass,salt)};
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(record));
+    localStorage.removeItem('locos_user'); // Quita el antiguo registro inseguro si existía.
+    $('log_user').value=user;
+    $('reg_pass').value='';
+    showLogin();
+    notify('Cuenta de demostración creada. Iniciá sesión.');
+  }catch(e){error.textContent=e.message || 'No se pudo guardar la cuenta.';}
+  finally{button.disabled=false;button.textContent='REGISTER';}
+});
+$('loginCard').addEventListener('submit',async (event)=>{
+  event.preventDefault();
+  const user=$('log_user').value.trim(),pass=$('log_pass').value;
+  const error=$('loginError'); error.textContent='';
+  const button=$('loginSubmit');button.disabled=true;button.textContent='VERIFICANDO...';
+  try{
+    let account=readAccount();
+    if(account && account.user===user && account.hash===await hashPassword(pass,fromB64(account.salt))){
+      sessionStorage.setItem(SESSION_KEY,user);
+      sessionStorage.removeItem(GUEST_KEY);
+      $('log_pass').value='';
+      enterApp(account);
+      notify('Bienvenido, '+user);
+    }else{
+      // Compatibilidad con el registro original: migrar al primer inicio de sesión.
+      let legacy=null;
+      try{legacy=JSON.parse(localStorage.getItem('locos_user')||'null');}catch{}
+      if(legacy && legacy.user===user && legacy.pass===pass){
+        const salt=crypto.getRandomValues(new Uint8Array(16));
+        account={email:legacy.email,user,salt:toB64(salt),hash:await hashPassword(pass,salt)};
+        localStorage.setItem(STORAGE_KEY,JSON.stringify(account));
+        localStorage.removeItem('locos_user');
+        sessionStorage.setItem(SESSION_KEY,user);
+        sessionStorage.removeItem(GUEST_KEY);
+        $('log_pass').value='';
+        enterApp(account);
+        notify('Cuenta local actualizada. ¡Bienvenido!');
+      }else error.textContent='Usuario o contraseña incorrectos.';
+    }
+  }catch(e){error.textContent=e.message || 'No se pudo iniciar sesión.';}
+  finally{button.disabled=false;button.textContent='INICIAR SESIÓN';}
+});
+$('guestButton').addEventListener('click',()=>{
+  sessionStorage.setItem(GUEST_KEY,'1');sessionStorage.removeItem(SESSION_KEY);
+  enterApp(null);
+});
+
+function enterApp(account){
+  currentUser=account;
+  $('authScreen').classList.add('hidden');
+  $('appScreen').classList.remove('hidden');
+  $('userBadge').textContent=account ? '@'+account.user : 'VISITANTE';
+  $('profileUser').textContent=account ? account.user : 'VISITANTE';
+  $('profileEmail').textContent=account ? account.email : 'No disponible';
+  $('profileType').textContent=account ? 'DEMO LOCAL' : 'INVITADO';
+  document.querySelectorAll('.baseUrl').forEach(el => el.textContent=origin);
+  $('curlGet').textContent=`curl "${origin}/api/v1/ping"`;
+  $('curlPost').textContent=`curl -X POST "${origin}/api/v1/echo" \\\n  -H "Content-Type: application/json" \\\n  -d '{"message":"hola"}'`;
+  updateTesterSelection();
+  navigate('home');
+  refreshStatus();
+  runQuickPing();
+}
+function logout(){
+  sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(GUEST_KEY);
+  currentUser=null;
+  $('appScreen').classList.add('hidden');$('authScreen').classList.remove('hidden');
+  showLogin();window.scrollTo({top:0,behavior:'instant'});
+}
+$('logoutButton').addEventListener('click',logout);
+$('accountLogout').addEventListener('click',logout);
+
+const PAGES={home:'INICIO_',endpoints:'ENDPOINTS_',tester:'API TESTER_',docs:'DOCUMENTACIÓN_',account:'MI CUENTA_'};
+function navigate(name){
+  if(!Object.hasOwn(PAGES,name))return;
+  document.querySelectorAll('.panel').forEach(el=>el.classList.toggle('active',el.id==='panel-'+name));
+  document.querySelectorAll('[data-nav]').forEach(btn=>btn.classList.toggle('active',btn.dataset.nav===name));
+  $('pageTitle').textContent=PAGES[name];
+  window.scrollTo({top:0,behavior:'instant'});
+}
+document.querySelectorAll('[data-nav],[data-goto]').forEach(btn=>{
+  btn.addEventListener('click',()=>navigate(btn.dataset.nav||btn.dataset.goto));
+});
+
+async function fetchWithTimeout(path, options={}){
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),8000);
+  const started=performance.now();
+  try{
+    const response=await fetch(path,{...options,signal:controller.signal,cache:'no-store'});
+    const raw=await response.text();
+    let data;try{data=JSON.parse(raw);}catch{data={raw};}
+    return {status:response.status,ok:response.ok,data,time:Math.round(performance.now()-started)};
+  }finally{clearTimeout(timeout);}
+}
+async function refreshStatus(){
+  $('statusValue').textContent='VERIFICANDO...';
+  $('statusDetail').textContent='Consultando /healthz';
+  $('sideStatus').textContent='VERIFICANDO...';
+  $('sideDot').className='status-dot';
+  try{
+    const result=await fetchWithTimeout('/healthz');
+    const up=result.ok && result.data?.ok===true;
+    $('statusValue').textContent=up?'ONLINE':'ERROR';
+    $('statusDetail').textContent=`HTTP ${result.status} · ${result.time} ms`;
+    $('sideStatus').textContent=up?'SERVIDOR ONLINE':'SERVIDOR CON ERROR';
+    $('sideDot').className='status-dot '+(up?'up':'down');
+    if(up){
+      try{
+        const info=await fetchWithTimeout('/api/v1/info');
+        const seconds=Number(info.data?.uptime_seconds);
+        $('uptimeValue').textContent=Number.isFinite(seconds) && seconds>=0 ? formatUptime(seconds) : '--';
+      }catch{$('uptimeValue').textContent='--';}
+    }else{$('uptimeValue').textContent='--';}
+  }catch{
+    $('statusValue').textContent='OFFLINE';
+    $('statusDetail').textContent='No se pudo contactar al servidor';
+    $('sideStatus').textContent='SIN CONEXIÓN';
+    $('sideDot').className='status-dot down';
+    $('uptimeValue').textContent='--';
+  }
+}
+function formatUptime(seconds){
+  const days=Math.floor(seconds/86400),hours=Math.floor(seconds%86400/3600),minutes=Math.floor(seconds%3600/60);
+  return days?`${days}d ${hours}h`:hours?`${hours}h ${minutes}m`:`${minutes}m`;
+}
+$('refreshButton').addEventListener('click',()=>{refreshStatus();runQuickPing();notify('Estado actualizado');});
+async function runQuickPing(){
+  const output=$('quickResponse');output.textContent='$ GET /api/v1/ping\n> Consultando...';
+  try{
+    const result=await fetchWithTimeout('/api/v1/ping');
+    output.textContent=`$ GET /api/v1/ping\n> HTTP ${result.status} · ${result.time} ms\n${JSON.stringify(result.data,null,2)}`;
+  }catch(e){output.textContent=`$ GET /api/v1/ping\n> ERROR: ${e.name==='AbortError'?'Tiempo de espera agotado':'No se pudo conectar'}`;}
+}
+
+function updateTesterSelection(){
+  const path=$('endpointSelect').value;
+  $('requestBodyGroup').classList.toggle('hidden',path!=='/api/v1/echo');
+  $('testerUrl').textContent=origin+path;
+}
+$('endpointSelect').addEventListener('change',updateTesterSelection);
+document.querySelectorAll('[data-try]').forEach(btn=>btn.addEventListener('click',()=>{
+  $('endpointSelect').value=btn.dataset.try;
+  updateTesterSelection();navigate('tester');
+}));
+$('testerForm').addEventListener('submit',async event=>{
+  event.preventDefault();
+  const path=$('endpointSelect').value;
+  const isPost=path==='/api/v1/echo';
+  const options={method:isPost?'POST':'GET'};
+  if(isPost){
+    try{options.body=JSON.stringify(JSON.parse($('requestBody').value));}
+    catch{$('responseMeta').textContent='ERROR · JSON inválido';$('testResponse').textContent='Revisá el formato de tu JSON antes de enviarlo.';return;}
+    options.headers={'Content-Type':'application/json'};
+  }
+  const send=$('sendRequest');send.disabled=true;send.textContent='ENVIANDO...';
+  $('responseMeta').textContent='Enviando petición...';
+  $('testResponse').textContent='> Esperando respuesta...';
+  try{
+    const result=await fetchWithTimeout(path,options);
+    $('responseMeta').textContent=`${options.method} ${path} · HTTP ${result.status} · ${result.time} ms`;
+    $('testResponse').textContent=JSON.stringify(result.data,null,2);
+  }catch(e){
+    $('responseMeta').textContent='ERROR DE CONEXIÓN';
+    $('testResponse').textContent=e.name==='AbortError'?'Se agotaron los 8 segundos de espera.':'No se pudo contactar al servidor: '+e.message;
+  }finally{send.disabled=false;send.textContent='> ENVIAR SOLICITUD';}
+});
+async function copyText(value){
+  try{await navigator.clipboard.writeText(value);notify('Copiado al portapapeles');}
+  catch{notify('No se pudo copiar: seleccioná el texto manualmente');}
+}
+$('copyResponse').addEventListener('click',()=>copyText($('testResponse').textContent));
+$('copyBaseUrl').addEventListener('click',()=>copyText(origin));
+document.querySelectorAll('[data-copy-path]').forEach(btn=>btn.addEventListener('click',()=>copyText(origin+btn.dataset.copyPath)));
+document.querySelectorAll('[data-copy-code]').forEach(btn=>btn.addEventListener('click',()=>copyText($(btn.dataset.copyCode).textContent)));
+
+// Mantener la sesión de demostración al recargar la pestaña.
+const saved=readAccount();
+const sessionUser=sessionStorage.getItem(SESSION_KEY);
+if(sessionUser && saved?.user===sessionUser) enterApp(saved);
+else if(sessionStorage.getItem(GUEST_KEY)==='1') enterApp(null);
 </script>
 </body>
 </html>

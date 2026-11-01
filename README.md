@@ -15,7 +15,7 @@ Backend funcional con **Node.js nativo**, sin bibliotecas externas, sin bases de
 
 | Método | Ruta | Resultado |
 |---|---|---|
-| GET | `/` | Página temporal (reemplazable) |
+| GET | `/` | Página diseñada por tu amigo |
 | GET | `/healthz` | Estado del servidor |
 | GET | `/api` o `/api/docs` | Lista de endpoints en JSON |
 | GET | `/api/v1/ping` | Respuesta `pong` |
@@ -58,7 +58,7 @@ El servidor escucha automáticamente el puerto indicado por `PORT` y la interfaz
 
 ## Integrar la web de tu amigo
 
-Tu amigo puede sustituir **solo** `public/index.html` y agregar sus archivos CSS, JS, imágenes y carpetas dentro de `public/`. El servidor ya entrega archivos estáticos. Las peticiones desde esa misma web a `/api/v1/...` comparten dominio y no necesitan CORS.
+Tu amigo puede actualizar **solo** `public/index.html` y agregar sus archivos CSS, JS, imágenes y carpetas dentro de `public/`. El servidor ya entrega archivos estáticos. Las peticiones desde esa misma web a `/api/v1/...` comparten dominio y no necesitan CORS.
 
 Ejemplo desde su JavaScript:
 
@@ -93,7 +93,7 @@ A continuación añadí la ruta a la lista de `/api/docs`.
 
 ```
 locos-api/
-├── public/index.html       # Temporal, tu amigo puede sustituirlo
+├── public/index.html       # Web actual de tu amigo
 ├── src/app.js              # Endpoints y servicio estático
 ├── server.js               # Arranque en Render
 ├── test/app.test.js        # Pruebas automáticas
@@ -103,3 +103,7 @@ locos-api/
 ```
 
 El backend base está listo, pero aún falta definir **qué funciones reales ofrecerá la API**; los endpoints incluidos son demostrativos.
+
+## Nota de seguridad sobre el registro de la web actual
+
+La web incluida tiene formularios de registro/inicio de sesión **solo demostrativos**: guardan correo, usuario y contraseña en `localStorage` del navegador, sin validación en el servidor. Esto no crea cuentas reales, no sirve entre dispositivos y no es seguro para contraseñas reales. **No lo promocionen como sistema de cuentas ni pidan contraseñas reales** hasta implementar backend de autenticación, hash de contraseñas y almacenamiento persistente seguro.

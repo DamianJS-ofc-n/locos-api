@@ -10,10 +10,10 @@ before(async () => {
 });
 after(() => new Promise(resolve => server.close(resolve)));
 
-test('La web temporal carga', async () => {
+test('La web principal carga', async () => {
   const res = await fetch(base);
   assert.equal(res.status, 200);
-  assert.match(await res.text(), /Locos API/);
+  assert.match(await res.text(), /LOCOS[- ]API/i);
 });
 
 test('Render puede consultar /healthz', async () => {
