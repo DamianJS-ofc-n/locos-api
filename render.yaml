@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: locos-api
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 22.16.0
+      - key: RATE_LIMIT_PER_MINUTE
+        value: 120

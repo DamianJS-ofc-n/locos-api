@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOCOS-API</title>
+<style>
+  *{box-sizing:border-box}
+  body{background:#000;color:#0f0;font-family:monospace;margin:0;padding:15px;min-height:100vh}
+  #matrix{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1}
+  .neon{font-size:36px;font-weight:900;text-shadow:0 0 15px #0f0;margin:25px 0;text-align:center}
+  .card{border:2px solid #0f0;border-radius:18px;box-shadow:0 0 15px #0f0;padding:24px;background:rgba(0,15,0,0.75);margin:20px auto;max-width:400px}
+  input{background:#000;border:2px solid #0f0;color:#0f0;padding:16px;width:100%;border-radius:12px;font-family:monospace;font-size:16px;margin:8px 0 16px 0;outline:none;box-shadow:0 0 8px rgba(0,255,0,0.4)}
+  .btn{background:#0f0;color:#000;border:none;padding:18px;width:100%;border-radius:12px;font-family:monospace;font-weight:900;font-size:18px;cursor:pointer;box-shadow:0 0 20px #0f0;margin-top:10px}
+  .btn-ghost{background:transparent;border:1px solid #0f0;color:#0f0;width:100%;padding:14px;border-radius:12px;font-family:monospace;cursor:pointer;margin-top:12px}
+  .hidden{display:none}
+  footer{text-align:center;margin-top:60px;padding:20px;font-size:14px;text-shadow:0 0 8px #0f0;border-top:1px solid rgba(0,255,0,0.2)}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<h1 class="neon">LOCOS-API</h1>
+
+<div class="card" id="registerCard">
+  <h2>REGISTER</h2>
+  <label>GMAIL</label>
+  <input id="reg_email" type="email" placeholder="you@gmail.com">
+  <label>USER NAME</label>
+  <input id="reg_user" type="text" placeholder="locos_user">
+  <label>PASSWORD</label>
+  <input id="reg_pass" type="password" placeholder="••••••••">
+  <button class="btn" onclick="doRegister()">REGISTER</button>
+  <button class="btn-ghost" onclick="showLogin()">¿Ya tienes cuenta? INICIAR SESIÓN</button>
+</div>
+
+<div class="card hidden" id="loginCard">
+  <h2>LOGIN</h2>
+  <label>USER NAME</label>
+  <input id="log_user" type="text">
+  <label>PASSWORD</label>
+  <input id="log_pass" type="password">
+  <button class="btn" onclick="doLogin()">INICIAR SESIÓN</button>
+  <button class="btn-ghost" onclick="showRegister()">¿No tienes cuenta? REGISTRARSE</button>
+</div>
+
+<footer>© Locos y asociados</footer>
+
+<script>
+const c=document.getElementById("matrix"),x=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;
+const cols=Math.floor(c.width/20)+1,y=Array(cols).fill(0);
+setInterval(()=>{x.fillStyle="rgba(0,0,0,0.05)";x.fillRect(0,0,c.width,c.height);x.fillStyle="#0f0";x.font="15px monospace";y.forEach((v,i)=>{x.fillText(String.fromCharCode(33+Math.random()*94),i*20,v);y[i]=v>c.height&&Math.random()>0.975?0:v+20})},50);
+function showLogin(){registerCard.classList.add('hidden');loginCard.classList.remove('hidden')}
+function showRegister(){loginCard.classList.add('hidden');registerCard.classList.remove('hidden')}
+function doRegister(){if(!reg_email.value||!reg_user.value||!reg_pass.value)return alert('Completa todo');localStorage.setItem('locos_user',JSON.stringify({email:reg_email.value,user:reg_user.value,pass:reg_pass.value}));alert('Registrado');showLogin()}
+function doLogin(){const s=JSON.parse(localStorage.getItem('locos_user')||'null');if(s&&s.user===log_user.value&&s.pass===log_pass.value)alert('Bienvenido '+s.user);else alert('Datos incorrectos')}
+</script>
+</body>
+</html>
