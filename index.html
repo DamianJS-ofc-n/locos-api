@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body { background:#000; color:#0f0; font-family:monospace; overflow:hidden }
+.neon { text-shadow: 0 0 10px #0f0, 0 0 20px #0f0; animation: flicker 1.5s infinite }
+@keyframes flicker { 0%,100%{opacity:1} 50%{opacity:0.8} }
+#matrix { position:fixed; top:0; left:0; z-index:-1 }
+.card { border:1px solid #0f0; box-shadow:0 0 15px #0f0; padding:20px; margin:20px; background:rgba(0,20,0,0.5) }
+a { color:#0f0; text-decoration:none }
+a:hover { text-shadow:0 0 10px #0f0 }
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<h1 class="neon">> MASTER CLOVER API_</h1>
+<div class="card">
+  <p>> Status: <span style="color:#0f0">ONLINE</span></p>
+  <p>> Endpoints:</p>
+  <p>> [GET] /api/tiktok?url=</p>
+  <p>> [GET] /api/yt?url=</p>
+  <p>> [GET] /api/ig?url=</p>
+</div>
+
+<script>
+// Efecto matrix
+const c=document.getElementById("matrix"),x=c.getContext("2d");
+c.height=window.innerHeight; c.width=window.innerWidth;
+const cols=Math.floor(c.width/20)+1,y=Array(cols).fill(0);
+function matrix(){
+  x.fillStyle="rgba(0,0,0,0.05)"; x.fillRect(0,0,c.width,c.height);
+  x.fillStyle="#0f0"; x.font="15px monospace";
+  y.forEach((v,i)=>{
+    const t=String.fromCharCode(Math.random()*128);
+    x.fillText(t,i*20,v);
+    if(v>c.height && Math.random()>0.975) y[i]=0; else y[i]=v+20;
+  })
+}
+setInterval(matrix,50)
+</script>
+</body>
+</html>
